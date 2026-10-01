@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}AgriValue | Smarter selling decisions{% endblock %}
+{% block content %}
+<section class="hero">
+  <div class="hero-copy">
+    <span class="eyebrow"><span class="eyebrow-dot"></span> Agricultural market decision support</span>
+    <h1>Smarter Decisions for a <span>More Profitable Harvest</span></h1>
+    <p class="hero-lead">Compare estimated prices across markets for the commodity you select, account for your transport cost, and review expected revenue and estimated net return before deciding where to sell.</p>
+    <div class="hero-actions">
+      <a class="button button-primary" href="{{ url_for('analysis') }}">Start Market Analysis <span aria-hidden="true">→</span></a>
+      <a class="button button-secondary" href="{{ url_for('dataset_summary') }}">View Dataset Summary</a>
+    </div>
+    <p class="hero-note"><span class="note-mark">i</span> Estimates use the supplied historical file. They are for comparison and do not guarantee a future price or profit.</p>
+  </div>
+  <div class="hero-visual" aria-label="Illustration of a farmer comparing produce markets">
+    <div class="sun"></div>
+    <div class="hill hill-back"></div>
+    <div class="hill hill-front"></div>
+    <div class="market-board">
+      <div class="board-top"><span>MARKET COMPARISON</span><span class="board-live"><i></i> DATA-LED</span></div>
+      <div class="board-row"><span>Crop price</span><strong>Estimate</strong></div>
+      <div class="board-row"><span>Transport cost</span><strong>Your input</strong></div>
+      <div class="board-row board-total"><span>Net return</span><strong>Compare</strong></div>
+    </div>
+    <div class="tomato tomato-one">✿</div><div class="tomato tomato-two">❋</div><div class="tomato tomato-three">◎</div>
+    <div class="visual-caption"><span class="caption-icon">✦</span> Compare before you travel</div>
+  </div>
+</section>
+
+{% if summary %}<section class="kpi-grid home-data-kpis" aria-label="Current dataset coverage">
+  <article class="kpi-card"><div class="kpi-icon kpi-green">⌖</div><span class="kpi-label">States</span><strong>{{ summary.state_count }}</strong><small>represented in the workbook</small></article>
+  <article class="kpi-card"><div class="kpi-icon kpi-blue">▤</div><span class="kpi-label">Districts</span><strong>{{ summary.district_count }}</strong><small>represented in the workbook</small></article>
+  <article class="kpi-card"><div class="kpi-icon kpi-lime">▦</div><span class="kpi-label">Markets</span><strong>{{ '{:,}'.format(summary.market_count) }}</strong><small>actual market names</small></article>
+  <article class="kpi-card"><div class="kpi-icon kpi-amber">❋</div><span class="kpi-label">Commodities</span><strong>{{ summary.commodity_count }}</strong><small>actual crop and item names</small></article>
+  <article class="kpi-card"><div class="kpi-icon kpi-blue">◈</div><span class="kpi-label">Records</span><strong>{{ '{:,}'.format(summary.total_records) }}</strong><small>source rows</small></article>
+</section>{% endif %}
+
+<section class="section-block home-features">
+  <div class="section-heading">
+    <span class="eyebrow">A clearer way to compare</span>
+    <h2>Plan your next market trip with useful numbers</h2>
+    <p>AgriValue brings price estimates and your own transport cost into one simple comparison.</p>
+  </div>
+  <div class="feature-grid">
+    <article class="feature-card"><span class="feature-icon icon-leaf">↗</span><h3>Compare commodity markets</h3><p>Review markets available for your selected commodity, state, and district.</p></article>
+    <article class="feature-card"><span class="feature-icon icon-price">₹</span><h3>Estimate expected prices</h3><p>See model estimates based on the selected commodity and actual market records.</p></article>
+    <article class="feature-card"><span class="feature-icon icon-return">−</span><h3>Include transport cost</h3><p>Enter your own estimated cost and compare net returns.</p></article>
+    <article class="feature-card"><span class="feature-icon icon-chart">▥</span><h3>Market Price Comparison</h3><p>Compare model estimates and view the highest estimated net return for your selected inputs.</p></article>
+    <article class="feature-card"><span class="feature-icon icon-leaf">≈</span><h3>Price Stability</h3><p>Compare actual historical price variability using mean, standard deviation, and CV.</p></article>
+    <article class="feature-card"><span class="feature-icon icon-price">↗</span><h3>Quantity Analysis</h3><p>Explore how quantities change expected revenue and estimated net return.</p></article>
+    <article class="feature-card"><span class="feature-icon icon-chart">↓</span><h3>Download Reports</h3><p>Export current analysis results as CSV, Excel, or a printable PDF.</p></article>
+  </div>
+</section>
+
+<section class="callout-band">
+  <div><span class="eyebrow eyebrow-light">Your crop. Your choice.</span><h2>Start with a simple market comparison.</h2></div>
+  <a class="button button-light" href="{{ url_for('analysis') }}">Compare Markets <span aria-hidden="true">→</span></a>
+</section>
+{% endblock %}

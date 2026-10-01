@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}Market Results | AgriValue{% endblock %}
+{% block content %}
+<main class="results-page">
+<section class="page-heading"><div><span class="eyebrow">Market Analysis · Results</span><h1>Market price and net return comparison</h1><p>The model estimates the commodity’s modal price. Revenue and estimated net return use your selected quantity, its compatible unit, and user-entered transport cost.</p></div></section>
+<div class="alert alert-warning">Estimated prices are based on historical market data and model inputs. Estimated net return is based on your selected inputs; neither guarantees an actual selling price, sale, or profit.</div>
+
+<section class="kpi-grid dataset-kpis results-summary">
+  <article class="kpi-card"><div class="kpi-icon kpi-green">▦</div><span class="kpi-label">Markets Compared</span><strong>{{ markets|length }}</strong><small>matching selected markets</small></article>
+  <article class="kpi-card"><div class="kpi-icon kpi-blue">❋</div><span class="kpi-label">Commodity</span><strong class="kpi-text">{{ commodity }}</strong><small>{{ state }} · {{ district }}</small></article>
+  <article class="kpi-card"><div class="kpi-icon kpi-lime">◈</div><span class="kpi-label">Quantity</span><strong id="kpi-quantity">{{ '{:,.2f}'.format(quantity) }} {{ quantity_unit }}</strong><small>selected quantity basis</small></article>
+  <article class="kpi-card"><div class="kpi-icon kpi-amber">₹</div><span class="kpi-label">User-Entered Transport Cost</span><strong id="kpi-transport">₹{{ '{:,.2f}'.format(transport_cost) }}</strong><small>fixed across this comparison</small></article>
+</section>
+
+{% include "_recommendation_card.html" %}
+
+<section class="section-block">
+  <div class="section-title-row"><div><span class="eyebrow">Selected inputs</span><h2>Your comparison setup</h2></div></div>
+  <div class="detail-card"><ul class="pill-list"><li>Commodity: {{ commodity }}</li><li>State: {{ state }}</li><li>District: {{ district }}</li><li>Markets: {{ markets|map(attribute='market')|join(', ') }}</li><li>Variety: {{ selected_variety or 'Any available variety' }}</li><li>Grade: {{ selected_grade or 'Any available grade' }}</li><li>Quantity: {{ '{:,.2f}'.format(quantity) }} {{ quantity_unit }}</li><li>Transport cost: ₹{{ '{:,.2f}'.format(transport_cost) }}</li></ul><p class="small-muted">Transport cost is user-entered and fixed for this comparison. Every estimated price remains in its recorded source unit.</p></div>
+</section>
+
+<section class="section-block">
+  <div class="section-title-row"><div><span class="eyebrow">Decision support</span><h2>Market Comparison</h2><p>Review each source price unit before comparing values. Expand market details for historical and secondary information.</p></div></div>
+  {% if markets|selectattr('expected_revenue', 'none')|list|length %}<div class="alert alert-warning">Revenue is unavailable for one or more rows because their source price unit cannot be safely combined with the selected quantity unit.</div>{% endif %}
+  <div class="table-wrap results-table-wrap"><table class="data-table comparison-table results-comparison-table"><thead><tr><th>Market</th><th>Estimated Price</th><th>Price Unit</th><th>Quantity</th><th>Expected Revenue</th><th>Transport Cost</th><th>Estimated Net Return</th><th>Price Stability</th></tr></thead><tbody>
+  {% for item in markets %}<tr data-market-row="{{ loop.index0 }}">
+    <td class="market-name">{{ item.market }}</td><td class="price-cell">{{ '{:,.2f}'.format(item.estimated_price_source_units) }}</td><td>{{ item.price_unit }}</td>
+    <td class="quantity-cell">{{ '{:,.2f}'.format(quantity) }} {{ quantity_unit }}</td>
+    <td class="revenue-cell">{% if item.expected_revenue is not none %}₹{{ '{:,.2f}'.format(item.expected_revenue) }}{% else %}Unavailable{% endif %}</td>
+    <td class="transport-cell">₹{{ '{:,.2f}'.format(item.transport_cost) }}</td>
+    <td class="return-cell">{% if item.estimated_net_return is not none %}₹{{ '{:,.2f}'.format(item.estimated_net_return) }}{% else %}Unavailable{% endif %}</td>
+    <td class="stability-cell">{{ item.source_stability_label }}</td>
+  </tr>{% else %}<tr><td colspan="8">No matching market estimates are available.</td></tr>{% endfor %}
+  </tbody></table></div>
+</section>
+
+{% if has_price_chart or has_return_chart %}
+<section class="chart-grid chart-grid-two section-block results-primary-charts {% if has_price_chart != has_return_chart %}chart-grid-single{% endif %}">
+  {% if has_price_chart %}<article class="chart-card"><div class="chart-card-heading"><div><span class="eyebrow">Model estimates</span><h3>Estimated Price by Market</h3></div><span class="chart-unit">source unit shown in tooltips</span></div><div class="chart-canvas"><canvas id="price-chart" aria-label="Estimated modal price by market"></canvas></div></article>{% endif %}
+  {% if has_return_chart %}<article class="chart-card"><div class="chart-card-heading"><div><span class="eyebrow">Input-based calculation</span><h3>Estimated Net Return by Market</h3></div><span class="chart-unit">₹</span></div><div class="chart-canvas"><canvas id="return-chart" aria-label="Estimated net return by market"></canvas></div></article>{% endif %}
+</section>
+{% endif %}
+
+{% if quantity_range %}
+<section class="section-block quantity-analysis-section">
+  <div class="section-title-row"><div><span class="eyebrow">What-if analysis</span><h2>Quantity Range Difference Analysis</h2><p>Explore how quantity changes expected revenue and estimated net return for one selected market. Transport cost is treated as fixed in each scenario; no quantity is labeled universally best.</p></div></div>
+  <div class="form-card quantity-analysis-card">
+    <div class="quantity-analysis-controls">
+      <div><label for="whatif-quantity">Comparison Quantity</label><input id="whatif-quantity" type="number" min="0.01" max="1000000000" step="any" value="{{ quantity }}"></div>
+      <div><label for="whatif-unit">Quantity Unit</label><select id="whatif-unit">{% for unit in quantity_units %}<option value="{{ unit }}" {% if quantity_unit == unit %}selected{% endif %}>{{ unit }}</option>{% endfor %}</select></div>
+      <div><label for="whatif-transport">User-Entered Transport Cost (₹)</label><input id="whatif-transport" type="number" min="0" max="1000000000" step="any" value="{{ transport_cost }}"></div>
+      <div><label for="range-market">Market for quantity scenarios</label><select id="range-market">{% for item in markets %}{% if item.expected_revenue is not none %}<option value="{{ loop.index0 }}" {% if loop.index0 == range_market_index %}selected{% endif %}>{{ item.market }} · {{ item.price_unit }}</option>{% endif %}{% endfor %}</select></div>
+      <div><label for="range-minimum">Minimum Quantity</label><input id="range-minimum" type="number" min="0.01" max="1000000000" step="any" value="{{ range_minimum }}"></div>
+      <div><label for="range-maximum">Maximum Quantity</label><input id="range-maximum" type="number" min="0.01" max="1000000000" step="any" value="{{ range_maximum }}"></div>
+      <div><label for="range-step">Quantity Step</label><input id="range-step" type="number" min="0.01" max="1000000000" step="any" value="{{ range_step }}"></div>
+    </div>
+    <button type="button" class="button button-primary" id="recalculate-returns">Recalculate Analysis</button>
+    <p id="whatif-message" class="field-help" aria-live="polite">{{ quantity_range_note }} Changing quantity does not change model-estimated prices.</p>
+  </div>
+  <article class="chart-card quantity-range-card"><div class="chart-card-heading"><div><span class="eyebrow">Selected market estimate · fixed transport input</span><h3>Quantity vs Estimated Net Return</h3></div><span class="chart-unit">quantity in {{ quantity_unit }} · return in ₹</span></div><div class="chart-canvas quantity-range-canvas"><canvas id="quantity-range-chart" aria-label="Quantity compared with estimated net return"></canvas></div></article>
+  <div class="table-wrap quantity-range-table-wrap"><table class="data-table quantity-range-table"><thead><tr><th>Quantity</th><th>Estimated Price</th><th>Expected Revenue</th><th>Transport Cost</th><th>Estimated Net Return</th><th>Difference from Previous Quantity</th></tr></thead><tbody id="quantity-range-body">
+    {% for row in quantity_range %}<tr><td>{{ '{:,.2f}'.format(row.quantity) }} {{ row.quantity_unit }}</td><td>{{ '{:,.2f}'.format(row.estimated_price) }} {{ row.price_unit }}</td><td>₹{{ '{:,.2f}'.format(row.expected_revenue) }}</td><td>₹{{ '{:,.2f}'.format(row.transport_cost) }}</td><td>₹{{ '{:,.2f}'.format(row.estimated_net_return) }}</td><td>{% if row.difference_from_previous is none %}—{% else %}₹{{ '{:,.2f}'.format(row.difference_from_previous) }}{% endif %}</td></tr>{% endfor %}
+  </tbody></table></div>
+</section>
+{% endif %}
+
+<section class="section-block">
+  <div class="section-title-row"><div><span class="eyebrow">Source-provided information</span><h2>Price Stability Analysis</h2><p>This classification is recorded in the dataset; it is not a machine-learning prediction or a forecast of future price variability.</p></div></div>
+  {% if chart_data.source_stability_labels|length > 1 %}<article class="chart-card stability-label-card"><div class="chart-card-heading"><div><h3>Observed Source Stability Label Distribution</h3></div><span class="chart-unit">number of matching records</span></div><div class="chart-canvas chart-canvas-small"><canvas id="stability-chart" aria-label="Distribution of source-provided price stability classifications"></canvas></div></article>
+  {% elif chart_data.source_stability_labels|length == 1 %}<p class="compact-analysis-note">{{ chart_data.source_stability_labels[0].label }} source classification across {{ chart_data.source_stability_labels[0].records }} matching record{% if chart_data.source_stability_labels[0].records != 1 %}s{% endif %}. A category comparison chart is not useful for a single label.</p>
+  {% else %}<p class="compact-analysis-note">No source price stability classifications are available for these matching records.</p>{% endif %}
+</section>
+
+<section class="section-block">
+  <div class="section-title-row"><div><span class="eyebrow">Historical observations and source labels</span><h2>Market Information and Additional Details</h2><p>Expand a market to review historical price range, record coverage, and source-provided context.</p></div></div>
+  <div class="market-details-list">{% for item in markets %}<details class="market-detail-disclosure"><summary><span>{{ item.market }}</span><span>{{ item.record_count }} matching record{% if item.record_count != 1 %}s{% endif %}</span></summary><dl class="market-details-grid">
+    <div><dt>District / State</dt><dd>{{ item.district }}, {{ item.state }}</dd></div><div><dt>Commodity</dt><dd>{{ item.commodity }}</dd></div><div><dt>Variety</dt><dd>{{ item.variety }}</dd></div><div><dt>Grade</dt><dd>{{ item.grade }}</dd></div>
+    <div><dt>Historical minimum</dt><dd>{% if item.observed_minimum is not none %}{{ '{:,.2f}'.format(item.observed_minimum) }} {{ item.price_unit }}{% else %}Unavailable{% endif %}</dd></div>
+    <div><dt>Historical maximum</dt><dd>{% if item.observed_maximum is not none %}{{ '{:,.2f}'.format(item.observed_maximum) }} {{ item.price_unit }}{% else %}Unavailable{% endif %}</dd></div>
+    <div><dt>Average modal price</dt><dd>{% if item.observed_average is not none %}{{ '{:,.2f}'.format(item.observed_average) }} {{ item.price_unit }}{% else %}Unavailable{% endif %}</dd></div>
+    <div><dt>Latest observation</dt><dd>{{ item.latest_observation_date }}</dd></div><div><dt>Market activity</dt><dd>{{ item.activity }}</dd></div><div><dt>Market size</dt><dd>{{ item.market_size }}</dd></div><div><dt>District region</dt><dd>{{ item.region }}</dd></div>
+  </dl></details>{% endfor %}</div>
+</section>
+
+<section class="section-block report-actions"><div class="section-title-row"><div><span class="eyebrow">Current analysis</span><h2>Download Reports</h2><p>Exports reflect these filters, calculated market results, and quantity-range scenarios.</p></div></div><div class="report-buttons"><a class="button button-secondary" href="{{ url_for('download_report', report_id=report_id, file_format='csv') }}">Download CSV</a><a class="button button-secondary" href="{{ url_for('download_report', report_id=report_id, file_format='xlsx') }}">Download Excel</a><a class="button button-primary" href="{{ url_for('download_report', report_id=report_id, file_format='pdf') }}">Download PDF Report</a></div></section>
+<p class="page-footnote">Estimated net return is based on the selected inputs and estimated market price; it is not a guarantee of actual profit. Historical prices may differ from future prices.</p>
+</main>
+
+<script>
+  window.agriValueResults = {{ markets|tojson }};
+  window.agriValueCharts = {{ chart_data|tojson }};
+  window.agriValueQuantityRange = {{ quantity_range|tojson }};
+  window.agriValueReportId = {{ report_id|tojson }};
+</script>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/vendor/chart.umd.min.js') }}" defer></script><script src="{{ url_for('static', filename='js/charts.js') }}" defer></script>{% endblock %}

@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Visual Analysis | AgriValue{% endblock %}
+{% block head %}<script src="{{ url_for('static', filename='js/vendor/chart.umd.min.js') }}" defer></script>{% endblock %}
+{% block content %}
+<section class="page-heading"><div><span class="eyebrow">Visual Analysis</span><h1>Market comparison and quantity scenarios</h1><p>Compare model estimates and quantity scenarios using matching rows from the final workbook.</p></div></section>
+{% if error %}<div class="alert alert-error" role="alert">{{ error }}</div>{% endif %}
+<section class="form-card visual-filter-card">
+  <div class="form-card-heading"><span class="form-step">01</span><div><h2>Choose analysis filters</h2><p>Use the sequence State → District → Market → Commodity → Variety → Grade.</p></div></div>
+  <form action="{{ url_for('visual_analysis') }}" method="get" id="visual-filter-form">
+    <input type="hidden" name="analyze" value="1">
+    <div class="form-row">
+      <div><label for="visual-state">State *</label><select id="visual-state" name="state" required><option value="">Choose a state</option>{% for item in states %}<option value="{{ item }}" {% if filters.state == item %}selected{% endif %}>{{ item }}</option>{% endfor %}</select></div>
+      <div><label for="visual-district">District *</label><select id="visual-district" name="district" required disabled><option value="">Choose a district</option></select></div>
+    </div>
+    <label for="visual-markets">Market(s)</label><select id="visual-markets" name="market" multiple size="5" disabled aria-describedby="visual-market-help"></select>
+    <p class="field-help" id="visual-market-help">Choose one market for a quantity range. Leave markets unselected to compare all matching markets in the district.</p>
+    <label for="visual-commodity">Commodity *</label><select id="visual-commodity" name="commodity" required disabled><option value="">Choose a commodity</option></select>
+    <div class="form-row">
+      <div><label for="visual-variety">Variety</label><select id="visual-variety" name="variety" disabled><option value="">Any available variety</option></select></div>
+      <div><label for="visual-grade">Grade</label><select id="visual-grade" name="grade" disabled><option value="">Any available grade</option></select></div>
+    </div>
+    <div class="form-row quantity-input-row">
+      <div><label for="minimum_quantity">Minimum Quantity</label><input id="minimum_quantity" name="minimum_quantity" type="number" min="0.01" max="1000000000" step="any" value="{{ filters.minimum_quantity }}" required></div>
+      <div><label for="maximum_quantity">Maximum Quantity</label><input id="maximum_quantity" name="maximum_quantity" type="number" min="0.01" max="1000000000" step="any" value="{{ filters.maximum_quantity }}" required></div>
+      <div><label for="quantity_step">Quantity Step</label><input id="quantity_step" name="quantity_step" type="number" min="0.01" max="1000000000" step="any" value="{{ filters.quantity_step }}" required></div>
+    </div>
+    <div class="form-row">
+      <div><label for="visual-quantity-unit">Quantity Unit *</label><select id="visual-quantity-unit" name="quantity_unit" required disabled><option value="">Choose matching unit</option></select></div>
+      <div><label for="visual-transport">User-Entered Transportation Cost (₹)</label><input id="visual-transport" name="transport_cost" type="number" min="0" max="1000000000" step="any" value="{{ filters.transport_cost }}" required></div>
+    </div>
+    <p class="field-help" id="visual-unit-help">Choose location and commodity filters to see source price units and supported quantity units.</p>
+    <p class="field-help">Transportation cost is a user-entered fixed comparison cost. It is not in the workbook.</p>
+    <button class="button button-primary" type="submit">Update Visual Analysis <span aria-hidden="true">→</span></button>
+  </form>
+</section>
+
+{% if analyzed and not error %}
+<div class="visual-record-note">{{ '{:,}'.format(records) }} matching source record(s).</div>
+<section class="section-block visual-section">
+  <div class="section-title-row"><div><span class="eyebrow">Section 1</span><h2>Market Price Comparison</h2><p>Estimated market modal prices from the trained model, displayed in each market's recorded source unit.</p></div></div>
+  {% if market_comparison %}
+  <div class="chart-card"><div class="chart-canvas visual-chart"><canvas id="market-comparison-chart" aria-label="Estimated price comparison across selected markets"></canvas></div></div>
+  <div class="table-wrap visual-table-wrap"><table class="data-table"><thead><tr><th>Market</th><th>Estimated Price</th><th>Price Unit</th><th>Expected Revenue</th><th>User-Entered Transport Cost</th><th>Estimated Net Return</th></tr></thead><tbody>{% for item in market_comparison %}<tr><td>{{ item.market }}</td><td>{{ '{:,.2f}'.format(item.estimated_price_source_units) }}</td><td>{{ item.price_unit }}</td><td>{% if item.expected_revenue is not none %}₹{{ '{:,.2f}'.format(item.expected_revenue) }}{% else %}Unavailable for this unit{% endif %}</td><td>₹{{ '{:,.2f}'.format(item.transport_cost) }}</td><td>{% if item.estimated_net_return is not none %}₹{{ '{:,.2f}'.format(item.estimated_net_return) }}{% else %}Unavailable for this unit{% endif %}</td></tr>{% endfor %}</tbody></table></div>
+  {% else %}<div class="alert alert-warning">Insufficient matching market records for comparison.</div>{% endif %}
+</section>
+<section class="section-block visual-section quantity-range-section">
+  <div class="section-title-row"><div><span class="eyebrow">Section 2 · Faculty requirement</span><h2>Quantity Range Difference Analysis</h2><p>Estimated price is held constant while quantity changes. Transportation cost is held fixed at your entered value.</p></div></div>
+  <div class="quantity-range-input-card">
+    {% if market_comparison %}
+    <form id="visual-quantity-form" class="quantity-range-form" method="get" action="{{ url_for('visual_analysis') }}">
+      <input type="hidden" name="analyze" value="1">
+      <input type="hidden" name="state" value="{{ filters.state }}">
+      <input type="hidden" name="district" value="{{ filters.district }}">
+      <input type="hidden" name="commodity" value="{{ filters.commodity }}">
+      <input type="hidden" name="variety" value="{{ filters.variety }}">
+      <input type="hidden" name="grade" value="{{ filters.grade }}">
+      <input type="hidden" name="quantity_unit" value="{{ filters.quantity_unit }}">
+      <input type="hidden" name="minimum_quantity" value="{{ filters.minimum_quantity }}">
+      <input type="hidden" name="maximum_quantity" value="{{ filters.maximum_quantity }}">
+      <input type="hidden" name="quantity_step" value="{{ filters.quantity_step }}">
+      <input type="hidden" name="transport_cost" value="{{ filters.transport_cost }}">
+      {% for market in filters.markets %}<input type="hidden" name="market" value="{{ market }}">{% endfor %}
+      <div class="quantity-range-form-grid">
+        <div><label for="range-market">Market</label><select id="range-market" name="range_market_index" required><option value="">Choose one market</option>{% for item in quantity_market_options %}<option value="{{ item.index }}" data-units="{{ item.quantity_units|join(',') }}" {% if selected_range_market_index == item.index %}selected{% endif %}>{{ item.market }} · {{ item.price_unit }}</option>{% endfor %}</select></div>
+        <div><label for="range-quantity-unit">Quantity Unit</label><select id="range-quantity-unit" name="range_quantity_unit" required {% if selected_range_market_index is none %}disabled{% endif %}><option value="">Choose a market first</option>{% for item in quantity_market_options %}{% if item.index == selected_range_market_index %}{% for unit in item.quantity_units %}<option value="{{ unit }}" {% if filters.range_quantity_unit == unit or (not filters.range_quantity_unit and filters.quantity_unit == unit) %}selected{% endif %}>{{ unit }}</option>{% endfor %}{% endif %}{% endfor %}</select></div>
+        <div><label for="range-minimum">Minimum Quantity</label><input id="range-minimum" name="range_minimum_quantity" type="number" min="0.01" max="1000000000" step="any" value="{{ filters.range_minimum_quantity }}" required></div>
+        <div><label for="range-maximum">Maximum Quantity</label><input id="range-maximum" name="range_maximum_quantity" type="number" min="0.01" max="1000000000" step="any" value="{{ filters.range_maximum_quantity }}" required></div>
+        <div><label for="range-step">Step</label><input id="range-step" name="range_quantity_step" type="number" min="0.01" max="1000000000" step="any" value="{{ filters.range_quantity_step }}" required></div>
+        <div><label for="range-transport">Transport Cost (₹)</label><input id="range-transport" name="range_transport_cost" type="number" min="0" max="1000000000" step="any" value="{{ filters.range_transport_cost }}" required></div>
+      </div>
+      <p class="field-help">Transportation cost is user-entered and treated as fixed across the selected quantity range. Choose one market to use its estimated price and recorded price unit.</p>
+      <button class="button button-primary" type="submit" id="generate-quantity-analysis">Generate Analysis <span aria-hidden="true">→</span></button>
+      <p id="quantity-range-feedback" class="quantity-range-feedback" role="status" aria-live="polite">{{ quantity_note if not quantity_range else 'Quantity scenarios shown for ' ~ quantity_range[0].market ~ '.' }}</p>
+    </form>
+    {% else %}<div class="quantity-range-empty"><strong>Choose filters to begin quantity analysis</strong><p>After applying filters, select one of the matching markets here to generate a quantity comparison.</p></div>{% endif %}
+  </div>
+  <div class="quantity-range-output" id="quantity-range-output" {% if not quantity_range %}hidden{% endif %}>
+    <div class="chart-card"><div class="chart-canvas visual-chart"><canvas id="quantity-range-chart" aria-label="Quantity compared with estimated net return"></canvas></div></div>
+    <div class="table-wrap visual-table-wrap"><table class="data-table"><thead><tr><th>Quantity</th><th>Estimated Price</th><th>Price Unit</th><th>Expected Revenue (₹)</th><th>Transport Cost (₹)</th><th>Estimated Net Return (₹)</th><th>Difference from Previous Quantity (₹)</th></tr></thead><tbody id="quantity-range-rows">{% for item in quantity_range %}<tr><td>{{ '{:,.2f}'.format(item.quantity) }} {{ item.quantity_unit }}</td><td>{{ '{:,.2f}'.format(item.estimated_price) }}</td><td>{{ item.price_unit }}</td><td>{{ '{:,.2f}'.format(item.expected_revenue) }}</td><td>{{ '{:,.2f}'.format(item.transport_cost) }}</td><td>{{ '{:,.2f}'.format(item.estimated_net_return) }}</td><td>{% if item.difference_from_previous is not none %}{{ '{:,.2f}'.format(item.difference_from_previous) }}{% else %}—{% endif %}</td></tr>{% endfor %}</tbody></table></div>
+    <p class="table-note">This scenario analysis does not rank quantities or recommend a selling quantity.</p>
+  </div>
+</section>
+{% if report_id %}<section class="section-block report-actions"><h2>Download this analysis</h2><div class="report-buttons"><a class="button button-secondary" href="{{ url_for('download_report', report_id=report_id, file_format='csv') }}">Download CSV</a><a class="button button-secondary" href="{{ url_for('download_report', report_id=report_id, file_format='xlsx') }}">Download Excel</a><a class="button button-primary" href="{{ url_for('download_report', report_id=report_id, file_format='pdf') }}">Download PDF Report</a></div></section>{% endif %}
+<script>window.agriVisualData = {{ {'market_comparison': market_comparison, 'quantity_range': quantity_range, 'report_id': report_id}|tojson }};</script>
+{% endif %}
+<p class="page-footnote">Estimated prices are not guaranteed future prices. Estimated net return depends on the selected estimate, quantity and user-entered transportation cost; it is not a guarantee of actual profit.</p>
+<script>window.agriVisualFilters = {{ filters|tojson }};</script>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/visual_analysis.js') }}" defer></script>{% endblock %}
+

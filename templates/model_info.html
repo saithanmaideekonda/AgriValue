@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Model Information | AgriValue{% endblock %}
+{% block content %}
+<section class="page-heading"><div><span class="eyebrow">Model Information</span><h1>How the estimate is made</h1><p>One explainable traditional regression model uses every commodity in the current dataset.</p></div></section>
+{% if model_error %}<div class="alert alert-warning"><strong>Model not available.</strong> {{ model_error }} Run <code>python -m utils.model_training</code> from the project folder, then restart the app.</div>{% endif %}
+{% if metadata %}
+<section class="model-summary-card">
+  <div class="model-icon">ƒ(x)</div><div><span class="eyebrow">Model type</span><h2>{{ metadata.model_name }}</h2><p>Target: <strong>{{ metadata.target_variable }}</strong> · {{ metadata.target_unit }}</p></div>
+</section>
+<section class="metric-grid model-metrics">
+  <article class="metric-card"><span>Training records</span><strong>{{ '{:,}'.format(metadata.training_records) }}</strong></article>
+  <article class="metric-card"><span>Testing records</span><strong>{{ '{:,}'.format(metadata.testing_records) }}</strong></article>
+  <article class="metric-card"><span>MAE (source units)</span><strong>{{ '{:,.2f}'.format(metadata.mae) }}</strong></article>
+  <article class="metric-card"><span>RMSE (source units)</span><strong>{{ '{:,.2f}'.format(metadata.rmse) }}</strong></article>
+  <article class="metric-card"><span>R² score</span><strong>{% if metadata.r2 is not none %}{{ '{:.3f}'.format(metadata.r2) }}{% else %}Unavailable{% endif %}</strong></article>
+</section>
+<section class="model-detail-grid section-block">
+  <article class="detail-card"><span class="eyebrow">Inputs used</span><h2>Features</h2><ul class="pill-list">{% for feature in metadata.features_used %}<li>{{ feature }}</li>{% endfor %}</ul><p>Commodity is included so one model can learn across all available items. Modal_Price is the target and is never an input. Min_Price, Max_Price, the source identifier, and aggregate source labels are excluded to reduce leakage risk.</p></article>
+  <article class="detail-card"><span class="eyebrow">Preparation</span><h2>Preprocessing method</h2><p>{{ metadata.preprocessing }}</p><p><strong>Training approach:</strong> {{ metadata.training_approach }}</p><p><strong>Evaluation split:</strong> {{ metadata.split_method }}</p><p><strong>Saved prediction model:</strong> refitted on all {{ '{:,}'.format(metadata.records_after_cleaning) }} cleaned records across {{ metadata.commodity_count }} commodities.</p></article>
+</section>
+<div class="alert alert-warning"><strong>Limits of this evaluation:</strong> {{ metadata.evaluation_note }} The model learns from available historical data. Actual future prices can differ, and these estimates do not guarantee revenue or profit.</div>
+<p class="small-muted model-feature-note">Dataset date range: {{ metadata.date_range[0] or 'Unavailable' }}{% if metadata.date_range[1] and metadata.date_range[1] != metadata.date_range[0] %} to {{ metadata.date_range[1] }}{% endif %} · {{ metadata.unique_dates }} distinct valid date(s) · {{ metadata.records_after_cleaning }} records included after cleaning.</p>
+{% else %}<div class="empty-state"><div class="empty-state-icon">ƒ</div><h2>Model results are not available yet</h2><p>Train and save the model to calculate real evaluation metrics.</p><code>python -m utils.model_training</code></div>{% endif %}
+{% endblock %}

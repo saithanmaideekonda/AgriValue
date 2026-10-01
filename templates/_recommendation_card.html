@@ -1,0 +1,31 @@
+<section class="recommendation-card section-block" id="recommended-selling-market" aria-live="polite">
+  <div class="recommendation-heading">
+    <span class="recommendation-icon" aria-hidden="true">↗</span>
+    <div><span class="eyebrow">Decision support</span><h2>Recommended Selling Market</h2></div>
+  </div>
+  <p class="recommendation-explanation" id="recommendation-explanation" {% if not recommendation.available %}hidden{% endif %}>Based on the selected inputs, this market has the highest estimated net return among the compared markets.</p>
+  <div class="recommendation-market-list" id="recommendation-market-list" {% if not recommendation.available %}hidden{% endif %}>
+    {% if recommendation.available %}
+    {% for item in recommendation.markets %}
+    <article class="recommendation-market" data-recommendation-market>
+      <div class="recommendation-market-heading"><h3 class="recommendation-market-name">{{ item.market }}</h3>{% if recommendation.markets|length > 1 %}<span class="recommendation-tie">Joint highest estimated net return</span>{% endif %}</div>
+      <dl class="recommendation-metrics">
+        <div><dt>Estimated Price</dt><dd data-recommendation-field="price">{{ '{:,.2f}'.format(item.estimated_price_source_units) }} {{ item.price_unit }}</dd></div>
+        <div><dt>Quantity</dt><dd data-recommendation-field="quantity">{{ '{:,.2f}'.format(item.quantity) }} {{ item.quantity_unit }}</dd></div>
+        <div><dt>Expected Revenue</dt><dd data-recommendation-field="revenue">₹{{ '{:,.2f}'.format(item.expected_revenue) }}</dd></div>
+        <div><dt>Transport Cost</dt><dd data-recommendation-field="transport">₹{{ '{:,.2f}'.format(item.transport_cost) }}</dd></div>
+        <div class="recommendation-net"><dt>Estimated Net Return</dt><dd data-recommendation-field="net-return">₹{{ '{:,.2f}'.format(item.estimated_net_return) }}</dd></div>
+      </dl>
+    </article>
+    {% endfor %}
+    {% endif %}
+  </div>
+  <div class="recommendation-unavailable" id="recommendation-unavailable" role="status" {% if recommendation.available %}hidden{% endif %}><strong>Recommendation unavailable</strong><p>No compared market has a valid estimated net return for the selected price and quantity units.</p></div>
+  <p class="recommendation-disclaimer">This is a model-based estimate using the selected inputs and historical market data. Verify the current market price and selling conditions before making a final selling decision.</p>
+</section>
+<section class="recommendation-method" aria-labelledby="recommendation-method-title">
+  <h3 id="recommendation-method-title">How this recommendation is calculated</h3>
+  <p><strong>Estimated Revenue</strong> = Estimated Price × Applicable Quantity</p>
+  <p><strong>Estimated Net Return</strong> = Estimated Revenue − Transport Cost</p>
+  <p>The recommended market is the market with the highest estimated net return among the selected markets. Tied markets are shown together.</p>
+</section>

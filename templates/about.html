@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}About AgriValue{% endblock %}
+{% block content %}
+<section class="page-heading"><div><span class="eyebrow">About AgriValue</span><h1>Simple estimates to support a farmer’s decision</h1><p>AgriValue uses historical agricultural market data and machine learning to estimate prices and compare potential revenue and net returns across markets.</p></div></section>
+<section class="about-intro"><div class="about-mark">A</div><div><h2>Smarter Decisions for a More Profitable Harvest</h2><p>Select any commodity available in the dataset, choose a state, district, and one or more markets, then enter quantity and your transportation-cost estimate. AgriValue calculates expected revenue, estimated net return, and historical market summaries to support your decision.</p></div></section>
+<section class="section-block">
+  <div class="section-title-row"><div><span class="eyebrow">How to read the result</span><h2>What AgriValue can and cannot tell you</h2></div></div>
+  <div class="about-grid">
+    <article class="about-card"><h3>What it does</h3><ul><li>Uses a Linear Regression model trained across the commodities in the current workbook.</li><li>The model estimates the commodity's Modal_Price in the recorded Price_Unit.</li><li>Calculates expected revenue using a quantity unit supported by the recorded price unit.</li><li>Subtracts your user-entered transportation-cost estimate.</li><li>Shows observed price variability, region, variety, grade, and quantity-range analysis.</li><li>Exports the current analysis as CSV, Excel, or PDF.</li></ul></article>
+    <article class="about-card about-card-warm"><h3>Important limits</h3><ul><li>Historical prices do not guarantee future prices.</li><li>The current workbook has limited temporal coverage and is not suitable for reliable long-term forecasting.</li><li>Price units are taken from the workbook. Unsupported conversions are not performed.</li><li>Transportation costs are user-entered fixed estimates and may differ from actual costs.</li><li>Model predictions depend on available historical records and may vary by commodity and location.</li><li>AgriValue provides decision-support estimates and does not guarantee profit.</li></ul></article>
+  </div>
+</section>
+<section class="section-block future-section"><div class="section-title-row"><div><span class="eyebrow">Future work</span><h2>Ideas for a later version</h2></div></div><div class="future-pills"><span>More historical years</span><span>Real-time market data</span><span>Improved transport estimates</span><span>Weather information</span><span>Telugu and regional language support</span><span>Voice interface</span><span>PWA and mobile improvements</span><span>Additional market costs</span></div></section>
+{% endblock %}

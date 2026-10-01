@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#174f36">
+  <title>{% block title %}AgriValue{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="{{ url_for('home') }}" aria-label="AgriValue home">
+        <span class="brand-mark" aria-hidden="true">A</span>
+        <span>AgriValue</span>
+      </a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-nav" aria-label="Open navigation">
+        <span></span><span></span><span></span>
+      </button>
+      <nav class="primary-nav" id="primary-nav" aria-label="Main navigation">
+        <a class="{% if active_page == 'home' %}active{% endif %}" href="{{ url_for('home') }}">Home</a>
+        <a class="{% if active_page == 'analysis' %}active{% endif %}" href="{{ url_for('analysis') }}">Market Analysis</a>
+        <a class="{% if active_page == 'results' %}active{% endif %}" href="{{ url_for('saved_results') }}">Results</a>
+        <a class="{% if active_page == 'visual' %}active{% endif %}" href="{{ url_for('visual_analysis') }}">Visual Analysis</a>
+        <a class="{% if active_page == 'reports' %}active{% endif %}" href="{{ url_for('reports') }}">Reports / Downloads</a>
+        <a class="{% if active_page == 'model' %}active{% endif %}" href="{{ url_for('model_info') }}">Model Information</a>
+        <a class="{% if active_page == 'dataset' %}active{% endif %}" href="{{ url_for('dataset_summary') }}">Dataset Summary</a>
+        <a class="{% if active_page == 'about' %}active{% endif %}" href="{{ url_for('about') }}">About</a>
+      </nav>
+    </div>
+  </header>
+  {% if data_error %}
+  <div class="global-alert" role="alert"><strong>Dataset unavailable.</strong> {{ data_error }}</div>
+  {% endif %}
+  <main id="main-content" class="page-shell">
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <span>AgriValue · Market estimates for decision support</span>
+      <span>Historical prices do not guarantee future prices.</span>
+    </div>
+  </footer>
+  <script src="{{ url_for('static', filename='js/site.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

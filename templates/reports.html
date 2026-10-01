@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Reports and Downloads | AgriValue{% endblock %}
+{% block content %}
+<section class="page-heading"><div><span class="eyebrow">Reports / Downloads</span><h1>Export your current analysis</h1><p>Create a market comparison or Visual Analysis first. Downloads contain that current selection and calculated results, not the whole master workbook.</p></div></section>
+{% if report_id %}
+<section class="report-download-card"><div class="kpi-icon kpi-green">↓</div><div><h2>Your latest analysis is ready</h2><p>These exports use the most recent analysis in this browser session.</p><div class="report-buttons"><a class="button button-secondary" href="{{ url_for('download_report', report_id=report_id, file_format='csv') }}">Download CSV</a><a class="button button-secondary" href="{{ url_for('download_report', report_id=report_id, file_format='xlsx') }}">Download Excel</a><a class="button button-primary" href="{{ url_for('download_report', report_id=report_id, file_format='pdf') }}">Download PDF Report</a></div></div></section>
+{% else %}
+<section class="empty-state"><div class="empty-state-icon">↓</div><h2>No analysis to export yet</h2><p>Run a comparison or update Visual Analysis. The download buttons will then appear with the actual current results.</p><a class="button button-primary" href="{{ url_for('analysis') }}">Start Market Analysis</a><a class="button button-secondary" href="{{ url_for('visual_analysis') }}">Open Visual Analysis</a></section>
+{% endif %}
+<section class="section-block chart-grid chart-grid-three report-format-grid"><article class="chart-card"><h2>CSV</h2><p>Current market estimates, selected inputs, revenue, user-entered transport cost, and estimated net return.</p></article><article class="chart-card"><h2>Excel</h2><p>Separate sheets for inputs, market results, calculated price stability, and quantity-range analysis.</p></article><article class="chart-card"><h2>PDF</h2><p>A printable summary with current results, available analyses, model metrics, and limitations.</p></article></section>
+<p class="page-footnote">All prices and returns are estimates. Transportation costs are entered by the user and are not derived from the market data.</p>
+{% endblock %}

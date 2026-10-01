@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Market Analysis | AgriValue{% endblock %}
+{% block content %}
+<section class="page-heading">
+  <div><span class="eyebrow">Market Analysis</span><h1>Compare Markets for Your Crop</h1><p>Select a location, commodity and grade from actual dataset records, then compare estimated prices and net returns.</p></div>
+</section>
+{% if error %}<div class="alert alert-error" role="alert">{{ error }}</div>{% endif %}
+{% if model_error %}<div class="alert alert-warning" role="alert"><strong>Price model not ready.</strong> {{ model_error }} Run <code>python -m utils.model_training</code>, then restart the app.</div>{% endif %}
+<div class="analysis-layout">
+  <section class="form-card">
+    <div class="form-card-heading"><span class="form-step">01</span><div><h2>Tell us about your crop</h2><p>Fields marked with * are required.</p></div></div>
+    <form action="{{ url_for('predict') }}" method="post" id="analysis-form">
+      <div class="form-row">
+        <div><label for="state">State <span>*</span></label>
+          <select id="state" name="state" required>
+            <option value="">Choose a state</option>{% for item in states %}<option value="{{ item }}" {% if selected_state == item %}selected{% endif %}>{{ item }}</option>{% endfor %}
+          </select>
+        </div>
+        <div><label for="district">District <span>*</span></label>
+          <select id="district" name="district" required disabled><option value="">Choose a district</option></select>
+        </div>
+      </div>
+      <label for="markets">Market(s) <span>*</span></label>
+      <select id="markets" name="markets" multiple size="6" required disabled aria-describedby="market-help"></select>
+      <div class="market-picker-actions"><button type="button" class="text-button" id="select-all-markets" disabled>Select all available</button><button type="button" class="text-button" id="clear-markets" disabled>Clear selection</button></div>
+      <p class="field-help" id="market-help">Choose one or more markets in this district. The list uses actual dataset records.</p>
+      <label for="commodity">Commodity <span>*</span></label>
+      <select id="commodity" name="commodity" required disabled><option value="">Choose a commodity</option></select>
+      <div class="form-row">
+        <div><label for="variety">Variety</label><select id="variety" name="variety" disabled><option value="">Any available variety</option></select></div>
+        <div><label for="grade">Grade</label><select id="grade" name="grade" disabled><option value="">Any available grade</option></select></div>
+      </div>
+      <div class="form-row">
+        <div><label for="quantity">Quantity <span>*</span></label>
+          <input id="quantity" name="quantity" type="number" min="0.01" max="1000000000" step="any" inputmode="decimal" value="{{ quantity }}" placeholder="For example, 500" required>
+        </div>
+        <div><label for="quantity_unit">Quantity unit <span>*</span></label>
+          <select id="quantity_unit" name="quantity_unit" required disabled><option value="">Choose locations and commodity first</option></select>
+        </div>
+      </div>
+      <p class="field-help" id="price-unit-help">Quantity choices update to units that can be safely matched to the selected markets' source price units.</p>
+      <div><label for="transport_cost">User-Entered Transportation Cost (₹) <span>*</span></label>
+        <input id="transport_cost" name="transport_cost" type="number" min="0" max="1000000000" step="any" inputmode="decimal" value="{{ transport_cost }}" placeholder="Enter your estimate" required>
+      </div>
+      <p class="field-help">Transport cost is your estimate for this comparison. It does not come from the dataset.</p>
+      <button class="button button-primary button-wide" type="submit" {% if data_error or model_error %}disabled{% endif %}>Compare Markets <span aria-hidden="true">→</span></button>
+    </form>
+  </section>
+  <aside class="analysis-aside">
+    <div class="aside-icon">✦</div><h2>What you’ll see</h2>
+    <ul class="check-list"><li>Estimated market prices</li><li>Expected revenue for your quantity</li><li>Transport cost and estimated net return</li><li>Historical and market information</li></ul>
+    <div class="aside-rule"></div>
+    <p class="small-muted">The model estimates Modal_Price in its recorded source unit. Quantity calculations use only supported unit conversions. Transportation cost is user-entered. Estimates are not guaranteed future prices or profit.</p>
+  </aside>
+</div>
+<script>
+  window.agriValueFilters = {{ {
+    'commodity': selected_commodity,
+    'state': selected_state,
+    'district': selected_district,
+    'markets': selected_markets,
+    'variety': selected_variety,
+    'grade': selected_grade,
+    'quantity_unit': quantity_unit
+  }|tojson }};
+</script>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/analysis.js') }}" defer></script>{% endblock %}
